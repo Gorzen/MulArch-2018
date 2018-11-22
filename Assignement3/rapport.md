@@ -2,7 +2,7 @@
 <b>Loris Pilotto, 262651</b>
 # Assignement 3 - Multirprocessor Architecture
 
-1)
+### 1)
 |         |   Insert   |   Delete   |    Search     |
 |---------|------------|------------|---------------|
 |  Insert |  Data Race | Data Race  | Data Race     |
@@ -21,7 +21,7 @@
 
 - Delete-search and search-delete: There is a data race, for example if the list is HEAD -> 1 -> 4 -> X and thread T0 wants to delete 4 and T1 wants to search 4. T0 wants to write to 1’s `next` and T1 wants to read 1’s `next` to get tot he next element to continue searching. -> There is a data race as one thread reads to a memory location another thread writes to. This is symmetric so it’s the same for search-delete.
 
-2)
+### 2)
 ```c
 #include < omp.h >
   omp_lock_t lock;
@@ -118,9 +118,10 @@ int search(node_t* head, int val) {
   return -1;
 }
 ```
-3) The biggest performance bottleneck of the approach taken in step 2 is the fact that we can’t execute several functions at the same time since they all share the same lock. It is not the most efficient way to achieve thread-safety since not all combinations of them have a data race. Here, we cannot do two search at the same time even though they have no data race.
+### 3)
+The biggest performance bottleneck of the approach taken in step 2 is the fact that we can’t execute several functions at the same time since they all share the same lock. It is not the most efficient way to achieve thread-safety since not all combinations of them have a data race. Here, we cannot do two search at the same time even though they have no data race.
 
-4)
+### 4)
 ```c
 // Linked list struct
 
@@ -322,13 +323,14 @@ We designed our thread-safe list as explained in the course.  For the insert and
 For the search function we only locked the current node because we don’t need to have access to the previous node so it’s useless to use the «hand over hand» method here. Having locked the current value is enough.
 <br/><br/>
 
-5) The biggest performance bottleneck of the approach taken in step two was the fact we couldn’t execute several functions at the same time since they all share the same lock. Now each locks are related with a single node of the linked list so several functions (i.e. search, delete and insert) can access the list now. If we execute several search/delete/insert on different threads the performance of the new design will be increased a lot, especially if they don’t need to ‘cross’ themselves. i.e. the first method to execute has to go at the end of the list, the next one a bit before, and so on. This way they don’t have to wait for the previous method to finish before being able to continue traversing the list.
+### 5)
+The biggest performance bottleneck of the approach taken in step two was the fact we couldn’t execute several functions at the same time since they all share the same lock. Now each locks are related with a single node of the linked list so several functions (i.e. search, delete and insert) can access the list now. If we execute several search/delete/insert on different threads the performance of the new design will be increased a lot, especially if they don’t need to ‘cross’ themselves. i.e. the first method to execute has to go at the end of the list, the next one a bit before, and so on. This way they don’t have to wait for the previous method to finish before being able to continue traversing the list.
 
 However, now one function takes more time to execute, because software locks take some time and with this design we lock/unlock locks in O(n), where n is the size of the list, whereas before it was O(1). So the methods are now slower alone, but may execute faster if we have multiple ones in parallel.
 
 Another performance bottleneck is if the methods are in the worst order possible, i.e. the method that executes make all the next ones wait, because they need to traverse the list and the first one is locking it.
 
-6)
+### 6)
 ```c
 // Linked list struct
 
@@ -560,6 +562,5 @@ The function search work as delete/insert but we only need to lock the node we a
 
 This solution should be deadlock free, because we look for nodes -> only reads and when we find the node we want we lock it and the previous one. So no one can modify them. Then we check that the list is in a state that makes sense, i.e. that the nodes we have still are in the list. If they still are in the list and linked then we can safely apply changes, if they don’t we try again. Since the nodes are locked, and they are still in a valid state in the list, their state cannot be changed until we unlock them. So we can safely modify them.
 
-7)
-
+### 7)
 Now that we don’t do lock during the traversal of the list, the traversal goes faster and has less waiting time. So the traversal of the list should be faster, however now we have to traverse it twice to do anything, once to find the node and a second time to validate the state. So if there are a lot of contention this implementation will probably go faster as it needs way less locking/unlocking interaction. However if there is no contention the solution in step 4 is probably faster, as acquiring the lock will be very fast and we will only traverse the list once.
