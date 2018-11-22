@@ -1,8 +1,8 @@
 1)
-|   | Insert | Delete  | Search  |
-|---|---|---|---|---|
-| Insert  |  Data Race | Data Race  | Data Race  |
-|  Delete |  Data Race |  Data Race | Data Race  |
+|         |   Insert   |   Delete   |    Search     |
+|---------|------------|------------|---------------|
+|  Insert |  Data Race | Data Race  | Data Race     |
+|  Delete |  Data Race | Data Race  | Data Race     |
 |  Search |  Data Race | Data Race  | No Data Race  |
 
 - Insert-insert : There is a data race, for example if the list is HEAD -> 1 -> X, and thread T0 and T1 want to insert 2 and 3 respectively, they will both write to 1’s `next` to point it to the element they are adding -> data race.
