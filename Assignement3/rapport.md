@@ -321,6 +321,7 @@ We designed our thread-safe list as explained in the course.  For the insert and
 
 For the search function we only locked the current node because we don’t need to have access to the previous node so it’s useless to use the «hand over hand» method here. Having locked the current value is enough.
 <br/><br/>
+
 5) The biggest performance bottleneck of the approach taken in step two was the fact we couldn’t execute several functions at the same time since they all share the same lock. Now each locks are related with a single node of the linked list so several functions (i.e. search, delete and insert) can access the list now. If we execute several search/delete/insert on different threads the performance of the new design will be increased a lot, especially if they don’t need to ‘cross’ themselves. i.e. the first method to execute has to go at the end of the list, the next one a bit before, and so on. This way they don’t have to wait for the previous method to finish before being able to continue traversing the list.
 
 However, now one function takes more time to execute, because software locks take some time and with this design we lock/unlock locks in O(n), where n is the size of the list, whereas before it was O(1). So the methods are now slower alone, but may execute faster if we have multiple ones in parallel.
