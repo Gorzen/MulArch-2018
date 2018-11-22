@@ -1,3 +1,7 @@
+Lucien Iseli Michaël, 274999<br/>
+Loris Pilotto, 262651
+# Assignement 3 - Multirprocessor Architecture
+
 1)
 |         |   Insert   |   Delete   |    Search     |
 |---------|------------|------------|---------------|
@@ -39,23 +43,23 @@ int insert(node_t * head, int val) {
   node_t * previous, * current;
   current = head;
 
-  while (current && current - > val < val) {
+  while (current && current -> val < val) {
     previous = current;
-    current = current - > next;
+    current = current -> next;
   }
 
-  if (current && current - > val == val) { // This value already exists!
+  if (current && current -> val == val) { // This value already exists!
     omp_unset_lock( & lock);
     return -1;
   }
 
   // Here is the right position to insert the new node.
-  node_t * new_node;
+  node_t* new_node;
   new_node = malloc(sizeof(node_t));
-  new_node - > val = val;
-  new_node - > next = current;
-  new_node - > to_remove = 0
-  previous - > next = new_node;
+  new_node -> val = val;
+  new_node -> next = current;
+  new_node -> to_remove = 0
+  previous -> next = new_node;
 
   omp_unset_lock( & lock);
   return 0;
@@ -102,23 +106,16 @@ int search(node_t* head, int val) {
   node_t* current = head->next;
 
   while (current) {
-
     if (current - > val == val) {
-
       omp_unset_lock( & lock);
-
       return 0;
-
     }
 
     current = current - > next;
-
   }
 
   omp_unset_lock( & lock);
-
   return -1;
-
 }
 ```
 3) The biggest performance bottleneck of the approach taken in step 2 is the fact that we can’t execute several functions at the same time since they all share the same lock. It is not the most efficient way to achieve thread-safety since not all combinations of them have a data race. Here, we cannot do two search at the same time even though they have no data race.
