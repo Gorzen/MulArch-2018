@@ -1,5 +1,5 @@
 *Lucien Iseli Michaël, 274999 & Loris Pilotto, 262651*
-# Assignement 3 - Multirprocessor Architecture
+# Assignement 3 - CS-307
 
 ### 1.
 |             |   Insert   |   Delete   |    Search     |
