@@ -263,120 +263,120 @@ Another performance bottleneck is if the methods are in the worst order possible
 ```c
 // Linked list struct
 typedef struct node {
-int val;
-struct node *next;
-int to_remove;
-omp_lock_t* lock ;
+    int val;
+    struct node *next;
+    int to_remove;
+    omp_lock_t* lock ;
 } node_t;
 
-omp_init_lock(head->lock) ; //We need to initialize head’s lock
+omp_init_lock(head->lock); //We need to initialize head’s lock
 
 /* This function checks if the list is valid with respect to curr and prev
  * i.e. that the previous is still accessible and that its next is curr
  */
-int validate(node_t* head, node_t* prev, node_t* curr){
-node_t* node = head;
+int validate(node_t* head, node_t* prev, node_t* curr) {
+    node_t* node = head;
 
-while(node && node->val <= prev->val){
-if(node == prev){
-return node->next == curr;
-}
-node = node->next;
-}
-return 0;
+    while(node && node->val <= prev->val) {
+        if(node == prev) {
+            return node->next == curr;
+        }
+        node = node->next;
+    }
+    return 0;
 }
 
 /* This function inserts a new given element at the right position of a given linked list.
  * It returns 0 on a successful insertion, and -1 if the list already has that value.
  */
 int insert(node_t *head, int val) {
-node_t *previous, *current;
-current = head;
+    node_t *previous, *current;
+    current = head;
 
-while (current && current->val < val) {
-previous = current;
-current  = current->next;
-}
+    while (current && current->val < val) {
+        previous = current;
+        current  = current->next;
+    }
 
-omp_set_lock(previous->lock);
-if(current){
-omp_set_lock(current->lock);
-}
+    omp_set_lock(previous->lock);
+    if(current) {
+        omp_set_lock(current->lock);
+    }
 
-if(!validate(head, previous, current)){
-omp_unset_lock(previous->lock);
-if(current){
-omp_unset_lock(current->lock);
-}
+    if(!validate(head, previous, current)) {
+        omp_unset_lock(previous->lock);
+        if(current) {
+            omp_unset_lock(current->lock);
+        }
+        
+        //We restart because the state of the list is not as expected
+        return insert(head, val);
+    }
 
-//We restart because the state of the list is not as expected
-return insert(head, val);
-}
+    if (current && current->val == val) { // This value already exists!
+        omp_unset_lock(previous->lock);
+        omp_unset_lock(current->lock);
+        return -1;
+    }
 
-if (current && current->val == val) { // This value already exists!
-omp_unset_lock(previous->lock);
-omp_unset_lock(current->lock);
-return -1;
-}
+    // Here is the right position to insert the new node.
+    node_t *new_node;
+    new_node = malloc(sizeof(node_t));
+    new_node->val = val;
+    new_node->next = current;
+    new_node->to_remove = 0;
+    omp_init_lock(new_node->lock);
 
-// Here is the right position to insert the new node.
-node_t *new_node;
-new_node = malloc(sizeof(node_t));
-new_node->val = val;
-new_node->next = current;
-new_node->to_remove = 0
-omp_init_lock(new_node->lock);
+    previous->next = new_node;
+    omp_unset_lock(previous->lock);
+    if(current) {
+        omp_unset_lock(current->lock);
+    }
 
-previous->next = new_node;
-omp_unset_lock(previous->lock);
-if(current){
-omp_unset_lock(current->lock);
-}
-
-return 0;
+    return 0;
 }
 
 /* This function removes the specified element of a given linked list.
  * The value of that element is returned if the element is found; otherwise it returns -1.
  */
 int delete(node_t *head, int val) {
-node_t *previous, *current;
+    node_t *previous, *current;
 
-if (head->next == NULL) { // The list is empty.
-return -1;
-}
+    if (head->next == NULL) { // The list is empty.
+        return -1;
+    }
 
-previous = head;
-current = head->next;
+    previous = head;
+    current = head->next;
 
-while (current) {
-if (current->val == val) {
-omp_set_lock(previous->lock);
-omp_set_lock(current->lock);
+    while (current) {
+        if (current->val == val) {
+            omp_set_lock(previous->lock);
+            omp_set_lock(current->lock);
 
-if(!validate(head, previous, current)){
-omp_unset_lock(previous->lock);
-omp_unset_lock(current->lock);
+            if(!validate(head, previous, current)) {
+                omp_unset_lock(previous->lock);
+                omp_unset_lock(current->lock);
 
-//We restart because the state of the list is not as expected
-return delete(head, val);
-}
+                //We restart because the state of the list is not as expected
+                return delete(head, val);
+            }
 
-previous->next = current->next;
-current->to_remove = 1; // Another system component will free this node later
+            previous->next = current->next;
+            current->to_remove = 1; // Another system component will free this node later
 
-omp_unset_lock(previous->lock);
-omp_unset_lock(current->lock);
-omp_destroy_lock(current->lock);
+            omp_unset_lock(previous->lock);
+            omp_unset_lock(current->lock);
+            omp_destroy_lock(current->lock);
 
-return val;
-}
+            return val;
+        }
 
-previous = current;
-current  = current->next;
-}
+        previous = current;
+        current  = current->next;
+    }
 
-return -1;
+    return -1;
 }
 
 /* This function searches for a specified element in a given linked list.
@@ -384,27 +384,27 @@ return -1;
  */
 
 int search(node_t *head, int val) {
-node_t *current = head->next;
+    node_t *current = head->next;
 
-while (current) {
-if (current->val == val) {
-omp_set_lock(current->lock);
+    while (current) {
+        if (current->val == val) {
+            omp_set_lock(current->lock);
 
-if(!validate(head, current, current->next)){
-omp_unset_lock(current->lock);
+            if(!validate(head, current, current->next)) {
+                omp_unset_lock(current->lock);
 
-//We restart because the state of the list is not as expected
-return search(head, val);
-}
+                //We restart because the state of the list is not as expected
+                return search(head, val);
+            }
 
-omp_unset_lock(current->lock);
-return 0;
-}
+            omp_unset_lock(current->lock);
+            return 0;
+        }
 
-current  = current->next;
-}
+        current  = current->next;
+    }
 
-return -1;
+    return -1;
 }
 ```
 In the new implementation, delete and insert first search for the node we want, then it locks this node and the previous one. Then the function call “validate” to check that the previous node is still accessible and that its next node is indeed the node we were looking for. We loop until those conditions are satisfied. If “validate” is true it means that the two locks are correctly set and the list is in the state we expect it to be in. We can then delete/insert the node safely and then free the locks.
