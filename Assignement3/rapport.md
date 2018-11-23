@@ -34,10 +34,10 @@ typedef struct node {
   int to_remove;
 }
 node_t;
+
 /* This function inserts a new given element at the right position of a given linked list.
  * It returns 0 on a successful insertion, and -1 if the list already has that value.
  */
-
 int insert(node_t * head, int val) {
   omp_set_lock( & lock);
   node_t * previous, * current;
@@ -100,7 +100,6 @@ int delete(node_t * head, int val) {
 /* This function searches for a specified element in a given linked list.
  * It returns zero if the element is found; otherwise it returns -1.
  */
-
 int search(node_t* head, int val) {
   omp_set_lock(&lock);
   node_t* current = head->next;
@@ -382,7 +381,6 @@ int delete(node_t *head, int val) {
 /* This function searches for a specified element in a given linked list.
  * It returns zero if the element is found; otherwise it returns -1.
  */
-
 int search(node_t *head, int val) {
     node_t *current = head->next;
 
