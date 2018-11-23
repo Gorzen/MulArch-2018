@@ -2,23 +2,23 @@
 # Assignement 3 - Multirprocessor Architecture
 
 ### 1.
-|         |   Insert   |   Delete   |    Search     |
-|---------|------------|------------|---------------|
-|  Insert |  Data Race | Data Race  | Data Race     |
-|  Delete |  Data Race | Data Race  | Data Race     |
-|  Search |  Data Race | Data Race  | No Data Race  |
+|             |   Insert   |   Delete   |    Search     |
+|-------------|------------|------------|---------------|
+|  **Insert** |  Data Race | Data Race  | Data Race     |
+|  **Delete** |  Data Race | Data Race  | Data Race     |
+|  **Search** |  Data Race | Data Race  | No Data Race  |
 
-- Insert-insert : There is a data race, for example if the list is HEAD -> 1 -> X, and thread T0 and T1 want to insert 2 and 3 respectively, they will both write to 1’s `next` to point it to the element they are adding -> data race.
+- **Insert-insert** : There is a data race, for example if the list is HEAD -> 1 -> X, and thread T0 and T1 want to insert 2 and 3 respectively, they will both write to 1’s `next` to point it to the element they are adding -> data race.
 
-- Delete-delete : There clearly is a data race, if two threads want to delete the same element they will both write to the previous element’s `next` which will be the same for the two threads -> data race
+- **Delete-delete** : There clearly is a data race, if two threads want to delete the same element they will both write to the previous element’s `next` which will be the same for the two threads -> data race
 
- - Search-search : Search doesn’t write to anything non-local -> no data race.
+- **Search-search** : Search doesn’t write to anything non-local -> no data race.
 
-- Insert-delete and delete-insert : There is a data race, for example if the list is HEAD -> 1 -> 3 -> X, and thread T0 wants to insert 2 and thread T1 wants to remove 3. They both will write to their previous element’s `next` which will be 1 for T0 because he wants to add 2 right after 1, and 1 for T1 because it’s the element before 1. -> They will write to the same element’s `next` -> data race. This is symmetric so it’s the same for delete-insert.
+- **Insert-delete and delete-insert** : There is a data race, for example if the list is HEAD -> 1 -> 3 -> X, and thread T0 wants to insert 2 and thread T1 wants to remove 3. They both will write to their previous element’s `next` which will be 1 for T0 because he wants to add 2 right after 1, and 1 for T1 because it’s the element before 1. -> They will write to the same element’s `next` -> data race. This is symmetric so it’s the same for delete-insert.
 
-- Insert-search and search-insert: There is a data race, for example if the list is HEAD -> 1 -> 4 -> X and thread T0 wants to insert 2 and T1 wants to search 4. T0 wants to write to 1’s `next` and T1 wants to read 1’s `next` to get to the next element to continue searching. -> There is a data race as one thread reads to a memory location another thread writes to. This is symmetric so it’s the same for search-insert.
+- **Insert-search and search-insert** : There is a data race, for example if the list is HEAD -> 1 -> 4 -> X and thread T0 wants to insert 2 and T1 wants to search 4. T0 wants to write to 1’s `next` and T1 wants to read 1’s `next` to get to the next element to continue searching. -> There is a data race as one thread reads to a memory location another thread writes to. This is symmetric so it’s the same for search-insert.
 
-- Delete-search and search-delete: There is a data race, for example if the list is HEAD -> 1 -> 4 -> X and thread T0 wants to delete 4 and T1 wants to search 4. T0 wants to write to 1’s `next` and T1 wants to read 1’s `next` to get tot he next element to continue searching. -> There is a data race as one thread reads to a memory location another thread writes to. This is symmetric so it’s the same for search-delete.
+- **Delete-search and search-delete** : There is a data race, for example if the list is HEAD -> 1 -> 4 -> X and thread T0 wants to delete 4 and T1 wants to search 4. T0 wants to write to 1’s `next` and T1 wants to read 1’s `next` to get tot he next element to continue searching. -> There is a data race as one thread reads to a memory location another thread writes to. This is symmetric so it’s the same for search-delete.
 
 ### 2.
 ```c
