@@ -1,5 +1,5 @@
-<b>Lucien Iseli Michaël, 274999</b><br/>
-<b>Loris Pilotto, 262651</b>
+Lucien Iseli Michaël, 274999
+Loris Pilotto, 262651
 # Assignement 3 - Multirprocessor Architecture
 
 ### 1.
