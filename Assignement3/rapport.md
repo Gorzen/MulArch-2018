@@ -23,9 +23,10 @@
 
 ### 2.
 ```c
-#include < omp.h >
-  omp_lock_t lock;
-omp_init_lock( & lock);
+#include <omp.h>
+
+omp_lock_t lock;
+omp_init_lock(&lock);
 
 // Linked list struct
 typedef struct node {
@@ -122,6 +123,8 @@ The biggest performance bottleneck of the approach taken in step 2 is the fact t
 
 ### 4.
 ```c
+#include <omp.h>
+
 // Linked list struct
 typedef struct node {
     int val;
@@ -260,6 +263,8 @@ Another performance bottleneck is if the methods are in the worst order possible
 
 ### 6.
 ```c
+#include <omp.h>
+
 // Linked list struct
 typedef struct node {
     int val;
