@@ -31,7 +31,7 @@ omp_init_lock(&lock);
 // Linked list struct
 typedef struct node {
   int val;
-  struct node * next;
+  struct node* next;
   int to_remove;
 }
 node_t;
@@ -40,29 +40,29 @@ node_t;
  * It returns 0 on a successful insertion, and -1 if the list already has that value.
  */
 int insert(node_t * head, int val) {
-  omp_set_lock( & lock);
+  omp_set_lock(&lock);
   node_t * previous, * current;
   current = head;
 
-  while (current && current -> val < val) {
+  while (current && current->val < val) {
     previous = current;
-    current = current -> next;
+    current = current->next;
   }
 
-  if (current && current -> val == val) { // This value already exists!
-    omp_unset_lock( & lock);
+  if (current && current->val == val) { // This value already exists!
+    omp_unset_lock(&lock);
     return -1;
   }
 
   // Here is the right position to insert the new node.
   node_t* new_node;
   new_node = malloc(sizeof(node_t));
-  new_node -> val = val;
-  new_node -> next = current;
-  new_node -> to_remove = 0
-  previous -> next = new_node;
+  new_node->val = val;
+  new_node->next = current;
+  new_node->to_remove = 0
+  previous->next = new_node;
 
-  omp_unset_lock( & lock);
+  omp_unset_lock(&lock);
   return 0;
 }
 
@@ -71,30 +71,30 @@ int insert(node_t * head, int val) {
  */
 int delete(node_t * head, int val) {
   omp_set_lock( & lock);
-  node_t * previous, * current;
+  node_t* previous, *current;
   
-  if (head - > next == NULL) { // The list is empty.
-    omp_unset_lock( & lock);
+  if (head->next == NULL) { // The list is empty.
+    omp_unset_lock(&lock);
     return -1;
   }
 
   previous = head;
-  current = head - > next;
+  current = head-> next;
 
   while (current) {
-    if (current - > val == val) {
-      previous - > next = current - > next;
-      current - > to_remove = 1; // Another system component will free this node later
-      omp_unset_lock( & lock);
+    if (current-> val == val) {
+      previous-> next = current - > next;
+      current-> to_remove = 1; // Another system component will free this node later
+      omp_unset_lock(&lock);
       return val;
     }
 
     previous = current;
-    current = current - > next;
+    current = current-> next;
 
   }
 
-  omp_unset_lock( & lock);
+  omp_unset_lock(&lock);
   return -1;
 }
 
@@ -106,15 +106,15 @@ int search(node_t* head, int val) {
   node_t* current = head->next;
 
   while (current) {
-    if (current - > val == val) {
-      omp_unset_lock( & lock);
+    if (current-> val == val) {
+      omp_unset_lock(&lock);
       return 0;
     }
 
-    current = current - > next;
+    current = current->next;
   }
 
-  omp_unset_lock( & lock);
+  omp_unset_lock(&lock);
   return -1;
 }
 ```
@@ -128,7 +128,7 @@ The biggest performance bottleneck of the approach taken in step 2 is the fact t
 // Linked list struct
 typedef struct node {
     int val;
-    struct node *next;
+    struct node* next;
     int to_remove;
     omp_lock_t* lock;
 } node_t;
@@ -144,24 +144,24 @@ int insert(node_t *head, int val) {
     node_t* current;
 
     current = head;
-    omp_set_lock(current->lock) ;
+    omp_set_lock(current->lock);
 
     while (current && current->val < val) {
-        previousTmp = previous ;
+        previousTmp = previous;
         previous = current;
         current  = current->next;
 
         omp_lock_t(current->lock) ;
         if(previousTmp) {
-            omp_unset_lock(previousTmp->lock) ;
+            omp_unset_lock(previousTmp->lock);
         }
     }
 
     if (current && current->val == val) { // This value already exists!
         if(previous) {
-            omp_unset_lock(previous->lock) ;
+            omp_unset_lock(previous->lock);
         }
-        omp_unset_lock(current->lock) ;
+        omp_unset_lock(current->lock);
         return -1;
     }
 
@@ -170,14 +170,14 @@ int insert(node_t *head, int val) {
     new_node = malloc(sizeof(node_t));
     new_node->val = val;
     new_node->next = current;
-    new_node->to_remove = 0
-                          omp_init_lock(new_node->lock);
+    new_node->to_remove = 0;
+    omp_init_lock(new_node->lock);
     previous->next = new_node;
 
     if(current) {
-        omp_unlock_t(current->lock) ;
+        omp_unlock_t(current->lock);
     }
-    omp_unlock_t(previous->lock) ;
+    omp_unlock_t(previous->lock);
     return 0;
 }
 
@@ -186,7 +186,7 @@ int insert(node_t *head, int val) {
  */
 int delete(node_t *head, int val) {
     node_t *previous, *current, *previousTmp;
-    omp_set_lock(head->lock) ;
+    omp_set_lock(head->lock);
 
     if (head->next == NULL) { // The list is empty.
         omp_unset_lock(head->lock);
@@ -197,7 +197,7 @@ int delete(node_t *head, int val) {
     current = head->next;
 
     if(current) {
-        omp_set_lock(current->lock) ;
+        omp_set_lock(current->lock);
     }
 
     while (current) {
@@ -211,7 +211,7 @@ int delete(node_t *head, int val) {
 
             return val;
         }
-        previousTmp = previous ;
+        previousTmp = previous;
         previous = current;
         current  = current->next;
         omp_set_lock(current->lock);
@@ -228,7 +228,7 @@ int delete(node_t *head, int val) {
  */
 int search(node_t *head, int val) {
     node_t *current = head->next;
-    node_t* previous = null;
+    node_t *previous = null;
 
     if(current) {
         omp_set_lock(current->lock);
@@ -236,15 +236,15 @@ int search(node_t *head, int val) {
 
     while (current) {
         if (current->val == val) {
-            omp_unset_lock(current->lock) ;
+            omp_unset_lock(current->lock);
             return 0;
         }
-        previous = current ;
+        previous = current;
         current  = current->next;
         if(current) {
             omp_set_lock(current->lock);
         }
-        omp_unset_lock(previous->lock) ;
+        omp_unset_lock(previous->lock);
     }
     return -1;
 }
@@ -268,7 +268,7 @@ Another performance bottleneck is if the methods are in the worst order possible
 // Linked list struct
 typedef struct node {
     int val;
-    struct node *next;
+    struct node* next;
     int to_remove;
     omp_lock_t* lock ;
 } node_t;
