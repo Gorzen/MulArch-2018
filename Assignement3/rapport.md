@@ -163,7 +163,7 @@ int insert(node_t *head, int val) {
         return -1;
     }
 
-// Here is the right position to insert the new node.
+    // Here is the right position to insert the new node.
     node_t *new_node;
     new_node = malloc(sizeof(node_t));
     new_node->val = val;
