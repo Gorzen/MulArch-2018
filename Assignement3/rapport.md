@@ -119,6 +119,7 @@ int search(node_t* head, int val) {
 ```
 ### 3.
 The biggest performance bottleneck of the approach taken in step 2 is the fact that we can’t execute several functions at the same time since they all share the same lock. It is not the most efficient way to achieve thread-safety since not all combinations of them have a data race. Here, we cannot do two search at the same time even though they have no data race.
+The same applies with two deletes, even though they have a data race, it only occurs if they both try to delete the same element, if two deletes occur to a valid list to 2 different elements without locks, there shouldn't be any problem.
 
 ### 4.
 ```c
