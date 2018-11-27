@@ -47,12 +47,22 @@ void array_process(double *input, double *output, int length, int iterations)
 }
 
 __global__
-void compute_gpu(double* gpu_input, double* gpu_output, double* temp, int length, int iterations){
+void compute_gpu(double* gpu_input, double* gpu_output, double* gpu_temp, int length, int iterations){
     int x_glob = (blockIdx.x * blockDim.x) + threadIdx.x;
     int y_glob = (blockIdx.y * blockDim.y) + threadIdx.y;
     int index = (y_glob * length) + x_glob;
 
-    //compute output[index]
+    output[(x_glob)*(length)+(y_glob)] = (input[(x_glob-1)*(length)+(y_glob-1)] +
+                                          input[(x_glob-1)*(length)+(y_glob)]   +
+                                          input[(x_glob-1)*(length)+(y_glob+1)] +
+                                          input[(x_glob)*(length)+(y_glob-1)]   +
+                                          input[(x_glob)*(length)+(y_glob)]     +
+                                          input[(x_glob)*(length)+(y_glob+1)]   +
+                                          input[(x_glob+1)*(length)+(y_glob-1)] +
+                                          input[(x_glob+1)*(length)+(y_glob)]   +
+                                          input[(x_glob+1)*(length)+(y_glob+1)] ) / 9;
+
+
 }
 
 
@@ -92,7 +102,18 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
-    compute_gpu(gpu_input, gpu_output, gpu_temp, length, iterations);
+    for(int n = 0; n < iterations; n++){
+	compute_gpu(gpu_input, gpu_output, gpu_temp, length, iterations);
+
+	gpu_output[(length/2-1)*length+(length/2-1)] = 1000;
+        gpu_output[(length/2)*length+(length/2-1)]   = 1000;
+        gpu_output[(length/2-1)*length+(length/2)]   = 1000;
+        gpu_output[(length/2)*length+(length/2)]     = 1000;
+
+        gpu_temp = gpu_input;
+        gpu_input = gpu_output;
+        gpu_output = gpu_temp;
+    }
     /* End GPU calculation	 */
     cudaEventRecord(comp_end);
     cudaEventSynchronize(comp_end);
