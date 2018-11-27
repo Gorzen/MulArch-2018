@@ -1,8 +1,8 @@
 /*
 ============================================================================
-Filename    : algorithm.c
-Author      : Your name goes here
-SCIPER      : Your SCIPER number
+Filename    : implementation.cu
+Author      : Lucien Michaël Iseli, Loris Pilotto
+SCIPER      : 274999, 262651
 ============================================================================
 */
 
@@ -60,9 +60,23 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     cudaEventCreate(&comp_end);
 
     /* Preprocessing goes here */
+    size_t SIZE = length * length;
+    double* gpu_input;
+    double* gpu_output;
+    double* gpu_temp;
+
+    cudaMalloc((void**) &gpu_input, SIZE);
+    cudaMalloc((void**) &gpu_output, SIZE);
+    cudaMalloc((void**) &gpu_temp, SIZE);
+    /* End preprocessing       */
 
     cudaEventRecord(cpy_H2D_start);
     /* Copying array from host to device goes here */
+    cudaMemcpy((void*)gpu_input,
+	       (void*)input,
+	       SIZE,
+	       cudaMemcpyHostToDevice);
+    /* End copy array				   */
     cudaEventRecord(cpy_H2D_end);
     cudaEventSynchronize(cpy_H2D_end);
 
@@ -74,6 +88,11 @@ void GPU_array_process(double *input, double *output, int length, int iterations
 
     cudaEventRecord(cpy_D2H_start);
     /* Copying array from device to host goes here */
+    cudaMemcpy((void*)output,
+	       (void*)gpu_output,
+	       SIZE,
+	       cudaMemcpyDeviceToHost);
+    /* End copy array 				   */
     cudaEventRecord(cpy_D2H_end);
     cudaEventSynchronize(cpy_D2H_end);
 
