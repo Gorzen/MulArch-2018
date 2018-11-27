@@ -46,6 +46,15 @@ void array_process(double *input, double *output, int length, int iterations)
     }
 }
 
+__global__
+void compute_gpu(double* gpu_input, double* gpu_output, double* temp, int length, int iterations){
+    int x_glob = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int y_glob = (blockIdx.y * blockDim.y) + threadIdx.y;
+    int index = (y_glob * length) + x_glob;
+
+    //compute output[index]
+}
+
 
 // GPU Optimized function
 void GPU_array_process(double *input, double *output, int length, int iterations)
@@ -83,6 +92,8 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
+    compute_gpu(gpu_input, gpu_output, gpu_temp, length, iterations);
+    /* End GPU calculation	 */
     cudaEventRecord(comp_end);
     cudaEventSynchronize(comp_end);
 
