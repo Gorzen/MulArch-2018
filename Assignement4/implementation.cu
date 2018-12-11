@@ -10,6 +10,7 @@ SCIPER      : 274999, 262651
 #include <iomanip>
 #include <sys/time.h>
 #include <cuda_runtime.h>
+#include <math.h>
 using namespace std;
 
 // CPU Baseline
@@ -106,8 +107,11 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
-    dim3 thrsPerBlock(length/4, length/4);
-    dim3 nBlks(4,4);
+    // Marche avec
+    // dim3 thrsPerBlock(length/4,length/4);
+    // dim3 nBlks(4, 4)
+    dim3 thrsPerBlock(32,32);
+    dim3 nBlks(ceil(length/32),ceil(length/32));
 
     for(int n = 0; n < iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
