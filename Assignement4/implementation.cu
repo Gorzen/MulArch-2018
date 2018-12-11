@@ -51,19 +51,24 @@ void compute_gpu(double* gpu_input, double* gpu_output, int length){
     int x_glob = (blockIdx.x * blockDim.x) + threadIdx.x;
     int y_glob = (blockIdx.y * blockDim.y) + threadIdx.y;
 
-    if(!(x_glob >= length-1 || x_glob <= 0 || y_glob >= length-1 || y_glob <= 0)){
-	gpu_output[(x_glob)+(length)*(y_glob)] = 2;
-	    /*
-    	gpu_output[(x_glob)*(length)+(y_glob)] = (gpu_input[(x_glob-1)*(length)+(y_glob-1)] +
-                                                  gpu_input[(x_glob-1)*(length)+(y_glob)]   +
-             	                                  gpu_input[(x_glob-1)*(length)+(y_glob+1)] +
-                                                  gpu_input[(x_glob)*(length)+(y_glob-1)]   +
-                     	                          gpu_input[(x_glob)*(length)+(y_glob)]     +
-                                                  gpu_input[(x_glob)*(length)+(y_glob+1)]   +
-                                                  gpu_input[(x_glob+1)*(length)+(y_glob-1)] +
-                                                  gpu_input[(x_glob+1)*(length)+(y_glob)]   +
-                                                  gpu_input[(x_glob+1)*(length)+(y_glob+1)] ) / 9;*/
+    if(x_glob >= length - 1 || y_glob >= length - 1 || x_glob <= 0 || y_glob <= 0){
+	return;
     }
+
+    gpu_output[(x_glob)*(length)+(y_glob)] = (gpu_input[(x_glob-1)*(length)+(y_glob-1)] +
+                                              gpu_input[(x_glob-1)*(length)+(y_glob)]   +
+        	                              gpu_input[(x_glob-1)*(length)+(y_glob+1)] +
+                                              gpu_input[(x_glob)*(length)+(y_glob-1)]   +
+                                              gpu_input[(x_glob)*(length)+(y_glob)]     +
+                                              gpu_input[(x_glob)*(length)+(y_glob+1)]   +
+                                              gpu_input[(x_glob+1)*(length)+(y_glob-1)] +
+                                              gpu_input[(x_glob+1)*(length)+(y_glob)]   +
+                                              gpu_input[(x_glob+1)*(length)+(y_glob+1)] ) /9;
+
+    gpu_output[(length/2-1)*length+(length/2-1)] = 1000;
+    gpu_output[(length/2)*length+(length/2-1)]   = 1000;
+    gpu_output[(length/2-1)*length+(length/2)]   = 1000;
+    gpu_output[(length/2)*length+(length/2)]     = 1000;
 }
 
 
@@ -83,8 +88,7 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     size_t SIZE = length * length * sizeof(double);
     double* gpu_input;
     double* gpu_output;
-    double* temp;
-
+    
     cudaMalloc((void**) &gpu_input, SIZE);
     cudaMalloc((void**) &gpu_output, SIZE);
     /* End preprocessing       */
@@ -102,15 +106,13 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
-    dim3 thrsPerBlock(length, length);
-    dim3 nBlks(1,1);
+    dim3 thrsPerBlock(length/4, length/4);
+    dim3 nBlks(4,4);
 
     for(int n = 0; n < iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
 
-    	temp = gpu_input;
     	gpu_input = gpu_output;
-    	gpu_output = temp;
     }
     /* End GPU calculation	 */
     cudaEventRecord(comp_end);
