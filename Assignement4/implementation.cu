@@ -108,21 +108,20 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
-    // Marche avec
-    // dim3 thrsPerBlock(length/4,length/4);
-    // dim3 nBlks(4, 4)
     dim3 thrsPerBlock(32,32);
     dim3 nBlks(ceil(length/32),ceil(length/32));
 
-    for(int n = 0; n < iterations; n++){
+    for(int n = 0; n <=(int)iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
 
-    	gpu_input = temp;
+    	temp = gpu_input;
 	gpu_input = gpu_output;
 	gpu_output = temp;
     }
 
     if(iterations % 2 == 0){
+	temp = gpu_input;
+	gpu_input = gpu_output;
 	gpu_output = gpu_input;
     }
 
