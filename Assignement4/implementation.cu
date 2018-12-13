@@ -89,6 +89,7 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     size_t SIZE = length * length * sizeof(double);
     double* gpu_input;
     double* gpu_output;
+    double* temp;
     
     cudaMalloc((void**) &gpu_input, SIZE);
     cudaMalloc((void**) &gpu_output, SIZE);
@@ -116,8 +117,15 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     for(int n = 0; n < iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
 
-    	gpu_input = gpu_output;
+    	gpu_input = temp;
+	gpu_input = gpu_output;
+	gpu_output = temp;
     }
+
+    if(iterations % 2 == 0){
+	gpu_output = gpu_input;
+    }
+
     /* End GPU calculation	 */
     cudaEventRecord(comp_end);
     cudaEventSynchronize(comp_end);
