@@ -49,12 +49,12 @@ void array_process(double *input, double *output, int length, int iterations)
 
 __global__
 void compute_gpu(double* gpu_input, double* gpu_output, int length){
-    int x_glob = (blockIdx.x * blockDim.x) + threadIdx.x;
-    int y_glob = (blockIdx.y * blockDim.y) + threadIdx.y;
+    int x_glob = blockIdx.x;
+    int y_glob = threadIdx.y;
 
-    if(x_glob >= length - 1 || y_glob >= length - 1 || x_glob <= 0 || y_glob <= 0){
-	return;
-    }
+    if(x_glob == length/2-1 && (y_glob == length/2 || y_glob == length/2-1) ||
+       x_glob == length/2 && (y_glob == length/2 || y_glob == length/2-1))
+	    return;
 
     gpu_output[(x_glob)*(length)+(y_glob)] = (gpu_input[(x_glob-1)*(length)+(y_glob-1)] +
                                               gpu_input[(x_glob-1)*(length)+(y_glob)]   +
@@ -65,11 +65,6 @@ void compute_gpu(double* gpu_input, double* gpu_output, int length){
                                               gpu_input[(x_glob+1)*(length)+(y_glob-1)] +
                                               gpu_input[(x_glob+1)*(length)+(y_glob)]   +
                                               gpu_input[(x_glob+1)*(length)+(y_glob+1)] ) /9;
-
-    gpu_output[(length/2-1)*length+(length/2-1)] = 1000;
-    gpu_output[(length/2)*length+(length/2-1)]   = 1000;
-    gpu_output[(length/2-1)*length+(length/2)]   = 1000;
-    gpu_output[(length/2)*length+(length/2)]     = 1000;
 }
 
 
@@ -101,6 +96,10 @@ void GPU_array_process(double *input, double *output, int length, int iterations
 	       (void*)input,
 	       SIZE,
 	       cudaMemcpyHostToDevice);
+    cudaMemcpy((void*)gpu_output,
+	       (void*)output,
+	       SIZE,
+	       cudaMemcpyHostToDevice);
     /* End copy array				   */
     cudaEventRecord(cpy_H2D_end);
     cudaEventSynchronize(cpy_H2D_end);
@@ -108,21 +107,20 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
-    dim3 thrsPerBlock(32,32);
-    dim3 nBlks(ceil(length/32),ceil(length/32));
+    dim3 thrsPerBlock(1,length);
+    dim3 nBlks(length,1);
 
     for(int n = 0; n <=(int)iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
 
+	//gpu_output[(length/2-1)*length+(length/2-1)] = 1000;
+    	//gpu_output[(length/2)*length+(length/2-1)]   = 1000;
+    	//gpu_output[(length/2-1)*length+(length/2)]   = 1000;
+    	//gpu_output[(length/2)*length+(length/2)]     = 1000;
+
     	temp = gpu_input;
 	gpu_input = gpu_output;
 	gpu_output = temp;
-    }
-
-    if(iterations % 2 == 0){
-	temp = gpu_input;
-	gpu_input = gpu_output;
-	gpu_output = gpu_input;
     }
 
     /* End GPU calculation	 */
@@ -131,6 +129,10 @@ void GPU_array_process(double *input, double *output, int length, int iterations
 
     cudaEventRecord(cpy_D2H_start);
     /* Copying array from device to host goes here */
+    if(iterations % 2 == 0){
+	gpu_output = gpu_input;
+    }
+    
     cudaMemcpy((void*)output,
 	       (void*)gpu_output,
 	       SIZE,
