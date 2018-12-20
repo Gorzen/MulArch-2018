@@ -48,7 +48,7 @@ void save(double *x, int length, const char *outputfilename)
     {
         for(int j=0; j<length-1; j++)
             fprintf(output_file, "%.4g;", x(i,j));
-        fprintf(output_file, "%.4g", x(i,length-1));
+        fprintf(output_file, "%.4g;", x(i,length-1));
         fprintf(output_file, "\n");
     }
     fclose(output_file);
