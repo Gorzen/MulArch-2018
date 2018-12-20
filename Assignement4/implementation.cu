@@ -49,11 +49,12 @@ void array_process(double *input, double *output, int length, int iterations)
 
 __global__
 void compute_gpu(double* gpu_input, double* gpu_output, int length){
-    int x_glob = blockIdx.x + 1;
-    int y_glob = threadIdx.y + 1;
+    int x_glob = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int y_glob = (blockIdx.y * blockDim.y) + threadIdx.y;
 
     if(x_glob == length/2-1 && (y_glob == length/2 || y_glob == length/2-1) ||
-       x_glob == length/2 && (y_glob == length/2 || y_glob == length/2-1))
+       x_glob == length/2 && (y_glob == length/2 || y_glob == length/2-1) || 
+       x_glob <= 0 || x_glob >= length-1 || y_glob <= 0 || y_glob >= length-1)
 	    return;
 
     gpu_output[(x_glob)*(length)+(y_glob)] = (gpu_input[(x_glob-1)*(length)+(y_glob-1)] +
@@ -107,8 +108,8 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     //Copy array from host to device
     cudaEventRecord(comp_start);
     /* GPU calculation goes here */
-    dim3 thrsPerBlock(1,length-2);
-    dim3 nBlks(length-2,1);
+    dim3 thrsPerBlock(32,32);
+    dim3 nBlks(ceil(length/32),ceil(length/32));
 
     for(int n = 0; n <(int)iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
