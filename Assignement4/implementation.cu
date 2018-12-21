@@ -41,10 +41,25 @@ void array_process(double *input, double *output, int length, int iterations)
         output[(length/2-1)*length+(length/2)]   = 1000;
         output[(length/2)*length+(length/2)]     = 1000;
 
+
         temp = input;
         input = output;
         output = temp;
     }
+}
+
+
+__global__
+void init_gpu(double* gpu_input, double* gpu_output, int length){
+    gpu_input[(length/2-1)*length+(length/2-1)] = 1000;
+    gpu_input[(length/2)*length+(length/2-1)]   = 1000;
+    gpu_input[(length/2-1)*length+(length/2)]   = 1000;
+    gpu_input[(length/2)*length+(length/2)]     = 1000;
+
+    gpu_output[(length/2-1)*length+(length/2-1)] = 1000;
+    gpu_output[(length/2)*length+(length/2-1)]   = 1000;
+    gpu_output[(length/2-1)*length+(length/2)]   = 1000;
+    gpu_output[(length/2)*length+(length/2)]     = 1000;
 }
 
 __global__
@@ -52,8 +67,8 @@ void compute_gpu(double* gpu_input, double* gpu_output, int length){
     int x_glob = blockIdx.x + 1;
     int y_glob = threadIdx.y + 1;
 
-    if(x_glob == length/2-1 && (y_glob == length/2 || y_glob == length/2-1) ||
-       x_glob == length/2 && (y_glob == length/2 || y_glob == length/2-1))
+    if(x_glob == length/2-1 && (y_glob == length/2-1 || y_glob == length/2) ||
+       x_glob == length/2 && (y_glob == length/2-1 || y_glob == length/2))
 	    return;
 
     gpu_output[(x_glob)*(length)+(y_glob)] = (gpu_input[(x_glob-1)*(length)+(y_glob-1)] +
@@ -88,18 +103,13 @@ void GPU_array_process(double *input, double *output, int length, int iterations
     
     cudaMalloc((void**) &gpu_input, SIZE);
     cudaMalloc((void**) &gpu_output, SIZE);
+    cudaMemset(gpu_output, 0, SIZE);
+    cudaMemset(gpu_input, 0, SIZE);
     /* End preprocessing       */
 
     cudaEventRecord(cpy_H2D_start);
     /* Copying array from host to device goes here */
-    cudaMemcpy((void*)gpu_input,
-	       (void*)input,
-	       SIZE,
-	       cudaMemcpyHostToDevice);
-    cudaMemcpy((void*)gpu_output,
-	       (void*)output,
-	       SIZE,
-	       cudaMemcpyHostToDevice);
+    init_gpu <<< 1, 1 >>> (gpu_input, gpu_output, length);
     /* End copy array				   */
     cudaEventRecord(cpy_H2D_end);
     cudaEventSynchronize(cpy_H2D_end);
@@ -112,7 +122,7 @@ void GPU_array_process(double *input, double *output, int length, int iterations
 
     for(int n = 0; n <(int)iterations; n++){
 	compute_gpu <<< nBlks, thrsPerBlock >>> (gpu_input, gpu_output, length);
-	
+
 	temp = gpu_input;
 	gpu_input = gpu_output;
 	gpu_output = temp;
